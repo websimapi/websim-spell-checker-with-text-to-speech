@@ -64,6 +64,26 @@ h1 {
     background-color: #3a7bc8;
 }
 
+.voice-selector {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#voice-select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 2px solid #ddd;
+    flex-grow: 1;
+    font-size: 14px;
+}
+
+#voice-select:focus {
+    border-color: #4a90e2;
+    outline: none;
+}
+
 .result-area {
     margin-top: 20px;
 }
@@ -118,4 +138,3 @@ h2, h3 {
     color: #555;
     margin-bottom: 10px;
 }
-

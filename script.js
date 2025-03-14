@@ -5,13 +5,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const spellingFeedback = document.getElementById('spelling-feedback');
     const suggestionsContainer = document.getElementById('suggestions-container');
     const suggestionsList = document.getElementById('suggestions-list');
+    const voiceSelect = document.getElementById('voice-select');
 
     // Create speech synthesis instance
     const speechSynthesis = window.speechSynthesis;
+    let voices = [];
     
     // Check if the browser supports speech synthesis
     if (!speechSynthesis) {
         alert("Your browser doesn't support Text to Speech. Please try a different browser.");
+    }
+
+    // Function to populate voice options
+    function populateVoiceList() {
+        voices = speechSynthesis.getVoices();
+        voiceSelect.innerHTML = '';
+        
+        let defaultVoice = null;
+        let englishFemaleVoices = voices.filter(voice => 
+            voice.lang.includes('en') && voice.name.toLowerCase().includes('female'));
+        
+        // If no English female voices found, look for any English voice
+        if (englishFemaleVoices.length === 0) {
+            englishFemaleVoices = voices.filter(voice => voice.lang.includes('en'));
+        }
+        
+        // Set default voice (English female if available)
+        if (englishFemaleVoices.length > 0) {
+            defaultVoice = englishFemaleVoices[0];
+        }
+        
+        voices.forEach(voice => {
+            const option = document.createElement('option');
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.setAttribute('data-voice-uri', voice.voiceURI);
+            
+            if (defaultVoice && voice.voiceURI === defaultVoice.voiceURI) {
+                option.selected = true;
+            }
+            
+            voiceSelect.appendChild(option);
+        });
+    }
+
+    // Initialize voices
+    populateVoiceList();
+    
+    // Chrome loads voices asynchronously
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
     }
 
     // Function to speak text
@@ -21,6 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Create a new utterance
         const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Set the selected voice
+        const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-voice-uri');
+        const selectedVoice = voices.find(voice => voice.voiceURI === selectedOption);
+        
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+        }
         
         // Adjust settings if needed
         utterance.rate = 1.0; // Speed of speech (0.1 to 10)
@@ -104,4 +154,3 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-
