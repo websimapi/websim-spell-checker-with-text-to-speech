@@ -21,23 +21,39 @@ document.addEventListener('DOMContentLoaded', () => {
     function getEnglishAmericanFemaleVoice() {
         const allVoices = speechSynthesis.getVoices();
         
-        // Filter for English US female voices
+        // First priority: explicitly female US English voices
         let femaleVoices = allVoices.filter(voice => 
             voice.lang.includes('en-US') && 
             (voice.name.toLowerCase().includes('female') || 
-             !voice.name.toLowerCase().includes('male'))
+             voice.name.toLowerCase().includes('samantha') ||
+             voice.name.toLowerCase().includes('victoria') ||
+             voice.name.toLowerCase().includes('karen') ||
+             voice.name.toLowerCase().includes('melody'))
         );
         
-        // If no specific female voices found, try any US English voice
+        // Second priority: US English voices that don't have "male" in the name
         if (femaleVoices.length === 0) {
-            femaleVoices = allVoices.filter(voice => voice.lang.includes('en-US'));
+            femaleVoices = allVoices.filter(voice => 
+                voice.lang.includes('en-US') && 
+                !voice.name.toLowerCase().includes('male') &&
+                !voice.name.toLowerCase().includes('guy') &&
+                !voice.name.toLowerCase().includes('david') &&
+                !voice.name.toLowerCase().includes('mark') &&
+                !voice.name.toLowerCase().includes('daniel') &&
+                !voice.name.toLowerCase().includes('thomas')
+            );
         }
         
-        // If still no voices, try any English voice
+        // Third priority: any English voice that's likely female
         if (femaleVoices.length === 0) {
-            femaleVoices = allVoices.filter(voice => voice.lang.includes('en'));
+            femaleVoices = allVoices.filter(voice => 
+                voice.lang.includes('en') && 
+                (voice.name.toLowerCase().includes('female') ||
+                 !voice.name.toLowerCase().includes('male'))
+            );
         }
         
+        // Last resort: first available voice (should rarely happen)
         return femaleVoices.length > 0 ? femaleVoices[0] : allVoices[0];
     }
     
@@ -65,11 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Set the selected voice
         if (selectedVoice) {
             utterance.voice = selectedVoice;
+            console.log("Speaking with voice:", selectedVoice.name);
         }
         
-        // Adjust settings if needed
-        utterance.rate = 1.0; // Speed of speech (0.1 to 10)
-        utterance.pitch = 1.0; // Pitch (0 to 2)
+        // Force female voice characteristics
+        utterance.rate = 1.0; // Speed of speech
+        utterance.pitch = 1.2; // Slightly higher pitch for more feminine sound
         
         // Speak the text
         speechSynthesis.speak(utterance);
