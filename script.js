@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Function to get the best English American female voice
     function getEnglishAmericanFemaleVoice() {
         const allVoices = speechSynthesis.getVoices();
+        console.log("Available voices:", allVoices.map(v => `${v.name} (${v.lang})`));
         
         // First priority: explicitly female US English voices
         let femaleVoices = allVoices.filter(voice => 
@@ -28,7 +29,16 @@ document.addEventListener('DOMContentLoaded', () => {
              voice.name.toLowerCase().includes('samantha') ||
              voice.name.toLowerCase().includes('victoria') ||
              voice.name.toLowerCase().includes('karen') ||
-             voice.name.toLowerCase().includes('melody'))
+             voice.name.toLowerCase().includes('melody') ||
+             voice.name.toLowerCase().includes('alex') || // Alex is usually female on some systems
+             voice.name.toLowerCase().includes('siri') ||
+             voice.name.toLowerCase().includes('lisa') ||
+             voice.name.toLowerCase().includes('catherine') ||
+             voice.name.toLowerCase().includes('allison') ||
+             voice.name.toLowerCase().includes('susan') ||
+             voice.name.toLowerCase().includes('ava') ||
+             voice.name.toLowerCase().includes('lora') ||
+             voice.name.toLowerCase().includes('zira'))
         );
         
         // Second priority: US English voices that don't have "male" in the name
@@ -40,18 +50,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 !voice.name.toLowerCase().includes('david') &&
                 !voice.name.toLowerCase().includes('mark') &&
                 !voice.name.toLowerCase().includes('daniel') &&
-                !voice.name.toLowerCase().includes('thomas')
+                !voice.name.toLowerCase().includes('thomas') &&
+                !voice.name.toLowerCase().includes('james') &&
+                !voice.name.toLowerCase().includes('john') &&
+                !voice.name.toLowerCase().includes('robert') &&
+                !voice.name.toLowerCase().includes('mike') &&
+                !voice.name.toLowerCase().includes('william')
             );
         }
         
         // Third priority: any English voice that's likely female
         if (femaleVoices.length === 0) {
             femaleVoices = allVoices.filter(voice => 
-                voice.lang.includes('en') && 
+                (voice.lang.includes('en') || voice.lang.startsWith('en')) && 
                 (voice.name.toLowerCase().includes('female') ||
-                 !voice.name.toLowerCase().includes('male'))
+                 voice.name.toLowerCase().includes('samantha') ||
+                 voice.name.toLowerCase().includes('victoria') ||
+                 voice.name.toLowerCase().includes('karen') ||
+                 voice.name.toLowerCase().includes('lisa') ||
+                 voice.name.toLowerCase().includes('siri'))
             );
         }
+        
+        // Log found voices for debugging
+        console.log("Found female voices:", femaleVoices.map(v => `${v.name} (${v.lang})`));
         
         // Last resort: first available voice (should rarely happen)
         return femaleVoices.length > 0 ? femaleVoices[0] : allVoices[0];
@@ -75,6 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cancel any ongoing speech
         speechSynthesis.cancel();
         
+        // Reinitialize voice to ensure we have the latest available voices
+        initializeVoice();
+        
         // Create a new utterance
         const utterance = new SpeechSynthesisUtterance(text);
         
@@ -86,7 +111,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Force female voice characteristics
         utterance.rate = 1.0; // Speed of speech
-        utterance.pitch = 1.2; // Slightly higher pitch for more feminine sound
+        utterance.pitch = 1.3; // Higher pitch for more feminine sound
+        utterance.volume = 1.0; // Full volume
         
         // Speak the text
         speechSynthesis.speak(utterance);

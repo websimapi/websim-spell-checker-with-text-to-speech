@@ -65,7 +65,7 @@ h1 {
 }
 
 .voice-selector {
-    display: none;
+    display: none; /* Keeping hidden as per user's request to remove voice selection UI */
 }
 
 #voice-select {
