@@ -75,14 +75,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Log found voices for debugging
         console.log("Found female voices:", femaleVoices.map(v => `${v.name} (${v.lang})`));
         
-        // Last resort: first available voice (should rarely happen)
-        return femaleVoices.length > 0 ? femaleVoices[0] : allVoices[0];
+        // Return null if no appropriate voice found, otherwise return first matching voice
+        return femaleVoices.length > 0 ? femaleVoices[0] : null;
     }
     
     // Initialize voice
     function initializeVoice() {
         selectedVoice = getEnglishAmericanFemaleVoice();
         console.log("Selected voice:", selectedVoice ? selectedVoice.name : "None available");
+        
+        // Show alert if no suitable voice is found
+        if (!selectedVoice) {
+            alert("No English female voice found on your system. Speech functionality will be disabled.");
+        }
     }
     
     // Initialize voice when available
@@ -100,14 +105,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reinitialize voice to ensure we have the latest available voices
         initializeVoice();
         
+        // Only proceed if we have a suitable voice
+        if (!selectedVoice) {
+            console.log("Speech cancelled: No English female voice available");
+            return;
+        }
+        
         // Create a new utterance
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Set the selected voice
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
-            console.log("Speaking with voice:", selectedVoice.name);
-        }
+        utterance.voice = selectedVoice;
+        console.log("Speaking with voice:", selectedVoice.name);
         
         // Force female voice characteristics
         utterance.rate = 1.0; // Speed of speech
