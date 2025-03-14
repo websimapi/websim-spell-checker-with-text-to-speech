@@ -65,13 +65,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Set the selected voice
-        if (voiceSelect.selectedOptions && voiceSelect.selectedOptions.length > 0) {
-            const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-voice-uri');
-            const selectedVoice = voices.find(voice => voice.voiceURI === selectedOption);
-            
-            if (selectedVoice) {
-                utterance.voice = selectedVoice;
-            }
+        const selectedIndex = voiceSelect.selectedIndex;
+        if (selectedIndex !== -1) {
+            utterance.voice = voices[selectedIndex];
         }
         
         // Adjust settings if needed
