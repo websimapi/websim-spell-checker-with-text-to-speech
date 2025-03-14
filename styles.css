@@ -65,7 +65,10 @@ h1 {
 }
 
 .voice-selector {
-    display: none; /* Keeping hidden as per user's request to remove voice selection UI */
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 #voice-select {
@@ -79,6 +82,17 @@ h1 {
 #voice-select:focus {
     border-color: #4a90e2;
     outline: none;
+}
+
+#voice-info {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #555;
+    font-style: italic;
+}
+
+#voice-info.error {
+    color: #e74c3c;
 }
 
 .result-area {

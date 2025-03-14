@@ -10,91 +10,117 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create speech synthesis instance
     const speechSynthesis = window.speechSynthesis;
     let voices = [];
-    let selectedVoice = null;
     
     // Check if the browser supports speech synthesis
     if (!speechSynthesis) {
         alert("Your browser doesn't support Text to Speech. Please try a different browser.");
     }
 
-    // Function to get the best English American female voice
-    function getEnglishAmericanFemaleVoice() {
-        const allVoices = speechSynthesis.getVoices();
-        console.log("Available voices:", allVoices.map(v => `${v.name} (${v.lang})`));
+    // Function to populate voice options
+    function populateVoiceList() {
+        voices = speechSynthesis.getVoices();
+        voiceSelect.innerHTML = '';
         
-        // First priority: explicitly female US English voices
-        let femaleVoices = allVoices.filter(voice => 
-            voice.lang.includes('en-US') && 
-            (voice.name.toLowerCase().includes('female') || 
-             voice.name.toLowerCase().includes('samantha') ||
-             voice.name.toLowerCase().includes('victoria') ||
-             voice.name.toLowerCase().includes('karen') ||
-             voice.name.toLowerCase().includes('melody') ||
-             voice.name.toLowerCase().includes('alex') || // Alex is usually female on some systems
-             voice.name.toLowerCase().includes('siri') ||
-             voice.name.toLowerCase().includes('lisa') ||
-             voice.name.toLowerCase().includes('catherine') ||
-             voice.name.toLowerCase().includes('allison') ||
-             voice.name.toLowerCase().includes('susan') ||
-             voice.name.toLowerCase().includes('ava') ||
-             voice.name.toLowerCase().includes('lora') ||
-             voice.name.toLowerCase().includes('zira'))
-        );
+        // Filter only English voices
+        const englishVoices = voices.filter(voice => 
+            voice.lang.includes('en') || voice.lang.includes('EN'));
         
-        // Second priority: US English voices that don't have "male" in the name
-        if (femaleVoices.length === 0) {
-            femaleVoices = allVoices.filter(voice => 
-                voice.lang.includes('en-US') && 
-                !voice.name.toLowerCase().includes('male') &&
-                !voice.name.toLowerCase().includes('guy') &&
-                !voice.name.toLowerCase().includes('david') &&
-                !voice.name.toLowerCase().includes('mark') &&
-                !voice.name.toLowerCase().includes('daniel') &&
-                !voice.name.toLowerCase().includes('thomas') &&
-                !voice.name.toLowerCase().includes('james') &&
-                !voice.name.toLowerCase().includes('john') &&
-                !voice.name.toLowerCase().includes('robert') &&
-                !voice.name.toLowerCase().includes('mike') &&
-                !voice.name.toLowerCase().includes('william')
-            );
+        if (englishVoices.length === 0) {
+            console.warn("No English voices found. Using all available voices.");
+            // Fall back to all voices if no English voices found
+            englishVoices.push(...voices);
         }
         
-        // Third priority: any English voice that's likely female
-        if (femaleVoices.length === 0) {
-            femaleVoices = allVoices.filter(voice => 
-                (voice.lang.includes('en') || voice.lang.startsWith('en')) && 
-                (voice.name.toLowerCase().includes('female') ||
-                 voice.name.toLowerCase().includes('samantha') ||
-                 voice.name.toLowerCase().includes('victoria') ||
-                 voice.name.toLowerCase().includes('karen') ||
-                 voice.name.toLowerCase().includes('lisa') ||
-                 voice.name.toLowerCase().includes('siri'))
-            );
+        // Find default voice (English US female if available)
+        let defaultVoice = null;
+        const englishAmericanFemaleVoices = englishVoices.filter(voice => 
+            (voice.lang.includes('en-US') || voice.lang.includes('en_US')) && 
+            (voice.name.toLowerCase().includes('female') || !voice.name.toLowerCase().includes('male')));
+        
+        // Try to find any English female voice if no US specific one
+        if (englishAmericanFemaleVoices.length === 0) {
+            const englishFemaleVoices = englishVoices.filter(voice => 
+                voice.name.toLowerCase().includes('female') || !voice.name.toLowerCase().includes('male'));
+            
+            if (englishFemaleVoices.length > 0) {
+                defaultVoice = englishFemaleVoices[0];
+            } else if (englishVoices.length > 0) {
+                defaultVoice = englishVoices[0]; // Any English voice
+            }
+        } else {
+            defaultVoice = englishAmericanFemaleVoices[0];
         }
         
-        // Log found voices for debugging
-        console.log("Found female voices:", femaleVoices.map(v => `${v.name} (${v.lang})`));
+        // Add voice verification information
+        const voiceInfo = document.getElementById('voice-info');
+        if (defaultVoice) {
+            voiceInfo.textContent = `Default voice: ${defaultVoice.name} (${defaultVoice.lang})`;
+            voiceInfo.classList.remove('error');
+        } else {
+            voiceInfo.textContent = "No suitable English voice found";
+            voiceInfo.classList.add('error');
+        }
         
-        // Return null if no appropriate voice found, otherwise return first matching voice
-        return femaleVoices.length > 0 ? femaleVoices[0] : null;
+        // Add voice options
+        englishVoices.forEach(voice => {
+            const option = document.createElement('option');
+            option.textContent = `${voice.name} (${voice.lang})`;
+            option.setAttribute('data-voice-uri', voice.voiceURI);
+            option.setAttribute('data-lang', voice.lang);
+            
+            if (defaultVoice && voice.voiceURI === defaultVoice.voiceURI) {
+                option.selected = true;
+            }
+            
+            voiceSelect.appendChild(option);
+        });
+        
+        // Test the selected voice
+        testSelectedVoice();
     }
-    
-    // Initialize voice
-    function initializeVoice() {
-        selectedVoice = getEnglishAmericanFemaleVoice();
-        console.log("Selected voice:", selectedVoice ? selectedVoice.name : "None available");
+
+    // Function to test if the selected voice works
+    function testSelectedVoice() {
+        if (voices.length === 0) {
+            console.warn("No voices available to test");
+            return;
+        }
         
-        // Show alert if no suitable voice is found
-        if (!selectedVoice) {
-            alert("No English female voice found on your system. Speech functionality will be disabled.");
+        const testUtterance = new SpeechSynthesisUtterance("test");
+        testUtterance.volume = 0; // Silent test
+        
+        // Set the selected voice
+        if (voiceSelect.selectedOptions && voiceSelect.selectedOptions.length > 0) {
+            const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-voice-uri');
+            const selectedVoice = voices.find(voice => voice.voiceURI === selectedOption);
+            
+            if (selectedVoice) {
+                testUtterance.voice = selectedVoice;
+                const voiceInfo = document.getElementById('voice-info');
+                testUtterance.onend = () => {
+                    voiceInfo.textContent = `Active voice: ${selectedVoice.name} (${selectedVoice.lang})`;
+                    voiceInfo.classList.remove('error');
+                };
+                testUtterance.onerror = () => {
+                    voiceInfo.textContent = `Voice ${selectedVoice.name} failed to load`;
+                    voiceInfo.classList.add('error');
+                };
+                
+                try {
+                    speechSynthesis.speak(testUtterance);
+                } catch (e) {
+                    console.error("Error testing voice:", e);
+                }
+            }
         }
     }
+
+    // Initialize voices
+    populateVoiceList();
     
-    // Initialize voice when available
+    // Chrome loads voices asynchronously
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = initializeVoice;
-    } else {
-        initializeVoice();
+        speechSynthesis.onvoiceschanged = populateVoiceList;
     }
 
     // Function to speak text
@@ -102,30 +128,35 @@ document.addEventListener('DOMContentLoaded', () => {
         // Cancel any ongoing speech
         speechSynthesis.cancel();
         
-        // Reinitialize voice to ensure we have the latest available voices
-        initializeVoice();
-        
-        // Only proceed if we have a suitable voice
-        if (!selectedVoice) {
-            console.log("Speech cancelled: No English female voice available");
-            return;
-        }
-        
         // Create a new utterance
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Set the selected voice
-        utterance.voice = selectedVoice;
-        console.log("Speaking with voice:", selectedVoice.name);
+        if (voiceSelect.selectedOptions && voiceSelect.selectedOptions.length > 0) {
+            const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-voice-uri');
+            const selectedVoice = voices.find(voice => voice.voiceURI === selectedOption);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+                console.log(`Using voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+            } else {
+                console.warn("Selected voice not found, falling back to default");
+            }
+        }
         
-        // Force female voice characteristics
-        utterance.rate = 1.0; // Speed of speech
-        utterance.pitch = 1.3; // Higher pitch for more feminine sound
-        utterance.volume = 1.0; // Full volume
+        // Add error handling for mobile devices
+        utterance.onerror = (event) => {
+            console.error("Speech synthesis error:", event);
+            document.getElementById('voice-info').textContent = "Error with voice playback. Try another voice.";
+            document.getElementById('voice-info').classList.add('error');
+        };
         
         // Speak the text
         speechSynthesis.speak(utterance);
     }
+
+    // Test voices when selection changes
+    voiceSelect.addEventListener('change', testSelectedVoice);
 
     // Function to check spelling and get suggestions
     async function checkSpelling(word) {
