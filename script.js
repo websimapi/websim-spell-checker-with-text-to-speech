@@ -10,50 +10,48 @@ document.addEventListener('DOMContentLoaded', () => {
     // Create speech synthesis instance
     const speechSynthesis = window.speechSynthesis;
     let voices = [];
+    let selectedVoice = null;
     
     // Check if the browser supports speech synthesis
     if (!speechSynthesis) {
         alert("Your browser doesn't support Text to Speech. Please try a different browser.");
     }
 
-    // Function to populate voice options
-    function populateVoiceList() {
-        voices = speechSynthesis.getVoices();
-        voiceSelect.innerHTML = '';
+    // Function to get the best English American female voice
+    function getEnglishAmericanFemaleVoice() {
+        const allVoices = speechSynthesis.getVoices();
         
-        let defaultVoice = null;
-        let englishAmericanFemaleVoices = voices.filter(voice => 
-            voice.lang.includes('en-US') && (voice.name.toLowerCase().includes('female') || !voice.name.toLowerCase().includes('male')));
+        // Filter for English US female voices
+        let femaleVoices = allVoices.filter(voice => 
+            voice.lang.includes('en-US') && 
+            (voice.name.toLowerCase().includes('female') || 
+             !voice.name.toLowerCase().includes('male'))
+        );
         
-        // If no English American female voices found, look for any English voice
-        if (englishAmericanFemaleVoices.length === 0) {
-            englishAmericanFemaleVoices = voices.filter(voice => voice.lang.includes('en'));
+        // If no specific female voices found, try any US English voice
+        if (femaleVoices.length === 0) {
+            femaleVoices = allVoices.filter(voice => voice.lang.includes('en-US'));
         }
         
-        // Set default voice (English American female if available)
-        if (englishAmericanFemaleVoices.length > 0) {
-            defaultVoice = englishAmericanFemaleVoices[0];
+        // If still no voices, try any English voice
+        if (femaleVoices.length === 0) {
+            femaleVoices = allVoices.filter(voice => voice.lang.includes('en'));
         }
         
-        voices.forEach(voice => {
-            const option = document.createElement('option');
-            option.textContent = `${voice.name} (${voice.lang})`;
-            option.setAttribute('data-voice-uri', voice.voiceURI);
-            
-            if (defaultVoice && voice.voiceURI === defaultVoice.voiceURI) {
-                option.selected = true;
-            }
-            
-            voiceSelect.appendChild(option);
-        });
+        return femaleVoices.length > 0 ? femaleVoices[0] : allVoices[0];
     }
-
-    // Initialize voices
-    populateVoiceList();
     
-    // Chrome loads voices asynchronously
+    // Initialize voice
+    function initializeVoice() {
+        selectedVoice = getEnglishAmericanFemaleVoice();
+        console.log("Selected voice:", selectedVoice ? selectedVoice.name : "None available");
+    }
+    
+    // Initialize voice when available
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = populateVoiceList;
+        speechSynthesis.onvoiceschanged = initializeVoice;
+    } else {
+        initializeVoice();
     }
 
     // Function to speak text
@@ -65,9 +63,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Set the selected voice
-        const selectedIndex = voiceSelect.selectedIndex;
-        if (selectedIndex !== -1) {
-            utterance.voice = voices[selectedIndex];
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
         }
         
         // Adjust settings if needed
