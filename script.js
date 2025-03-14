@@ -22,17 +22,17 @@ document.addEventListener('DOMContentLoaded', () => {
         voiceSelect.innerHTML = '';
         
         let defaultVoice = null;
-        let englishFemaleVoices = voices.filter(voice => 
-            voice.lang.includes('en') && voice.name.toLowerCase().includes('female'));
+        let englishAmericanFemaleVoices = voices.filter(voice => 
+            voice.lang.includes('en-US') && (voice.name.toLowerCase().includes('female') || !voice.name.toLowerCase().includes('male')));
         
-        // If no English female voices found, look for any English voice
-        if (englishFemaleVoices.length === 0) {
-            englishFemaleVoices = voices.filter(voice => voice.lang.includes('en'));
+        // If no English American female voices found, look for any English voice
+        if (englishAmericanFemaleVoices.length === 0) {
+            englishAmericanFemaleVoices = voices.filter(voice => voice.lang.includes('en'));
         }
         
-        // Set default voice (English female if available)
-        if (englishFemaleVoices.length > 0) {
-            defaultVoice = englishFemaleVoices[0];
+        // Set default voice (English American female if available)
+        if (englishAmericanFemaleVoices.length > 0) {
+            defaultVoice = englishAmericanFemaleVoices[0];
         }
         
         voices.forEach(voice => {
@@ -65,11 +65,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const utterance = new SpeechSynthesisUtterance(text);
         
         // Set the selected voice
-        const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-voice-uri');
-        const selectedVoice = voices.find(voice => voice.voiceURI === selectedOption);
-        
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
+        if (voiceSelect.selectedOptions && voiceSelect.selectedOptions.length > 0) {
+            const selectedOption = voiceSelect.selectedOptions[0].getAttribute('data-voice-uri');
+            const selectedVoice = voices.find(voice => voice.voiceURI === selectedOption);
+            
+            if (selectedVoice) {
+                utterance.voice = selectedVoice;
+            }
         }
         
         // Adjust settings if needed
